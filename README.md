@@ -10,4 +10,4 @@
 
 ## Shell Scripts
 
-[`rke-bin-install.sh`](shell-script/rke-bin-install.sh)
+* [`rke-bin-install.sh`](shell-script/rke-bin-install.sh)
