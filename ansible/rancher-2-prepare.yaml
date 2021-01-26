@@ -1,0 +1,77 @@
+---
+- name: Preparing hosts for Rancher 2.0 install
+  hosts: rancher
+  tasks:
+
+    - name: Downloading upstream Docker install script from Rancher
+      get_url:
+        url: https://releases.rancher.com/install-docker/19.03.sh
+        dest: /root/docker-install.sh
+        mode: 0755
+      tags: docker
+
+    - name: Installing docker
+      shell: ./docker-install.sh
+      args: 
+        chdir: /root
+        creates: /bin/docker
+
+    - name: Configuring docker service
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Creating Rancher user
+      user:
+        name: rancher
+        uid: 1010
+        comment: "Rancher 2.0 user"
+        password: "{{ 'lab_test' | password_hash('sha512') }}"
+        update_password: on_create
+        groups: docker
+        append: yes
+        state: present
+
+    - name: Loading necessary Linux kernel modules
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - br_netfilter
+        - ip6_udp_tunnel
+        - ip_set
+        - ip_set_hash_ip
+        - ip_set_hash_net
+        - iptable_filter
+        - iptable_mangle
+        - iptable_nat
+        - iptable_raw
+        - nf_conntrack
+        - nf_conntrack_ipv4
+        - nf_conntrack_netlink
+        - nf_defrag_ipv4
+        - nf_nat
+        - nf_nat_ipv4
+        - nf_nat_masquerade_ipv4
+        - nfnetlink
+        - udp_tunnel
+        - veth
+        - vxlan
+        - x_tables
+        - xt_addrtype
+        - xt_comment
+        - xt_conntrack
+        - xt_mark
+        - xt_multiport
+        - xt_nat
+        - xt_recent
+        - xt_set
+        - xt_statistic
+        - xt_tcpudp
+
+    - name: Configuring sysctl
+      sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: "1"
+        state: present
